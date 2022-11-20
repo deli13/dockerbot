@@ -1,0 +1,5 @@
+credentials:
+  tgcredentials: 555:xxxx
+
+project:
+  allowUser: []
