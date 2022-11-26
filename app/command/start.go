@@ -9,14 +9,14 @@ type StartCommand struct {
 	AllowedKeyboard []string
 }
 
-func (c StartCommand) Has(message *tgbotapi.Message) bool {
-	if message.Text == c.Command {
+func (c StartCommand) Has(message tgbotapi.Update) bool {
+	if message.Message != nil && message.Message.Text == c.Command {
 		return true
 	}
 	return false
 }
 
-func (c StartCommand) Work(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
+func (c StartCommand) Work(bot *tgbotapi.BotAPI, message tgbotapi.Update) {
 	bot.Send(tgbotapi.NewSetMyCommands(tgbotapi.BotCommand{
 		Command:     c.Command,
 		Description: "Запуск",
@@ -25,7 +25,7 @@ func (c StartCommand) Work(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	for _, str := range c.AllowedKeyboard {
 		keyboard = append(keyboard, tgbotapi.NewKeyboardButton(str))
 	}
-	msg := tgbotapi.NewMessage(message.Chat.ID, "Доступные действия")
+	msg := tgbotapi.NewMessage(message.Message.Chat.ID, "Доступные действия")
 	msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(tgbotapi.NewKeyboardButtonRow(keyboard...))
 	bot.Send(msg)
 }

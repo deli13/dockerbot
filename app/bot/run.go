@@ -30,10 +30,10 @@ func StartBot(config config.Configuration) {
 	botApi.Debug = true
 	messages := botApi.GetUpdatesChan(update)
 	for message := range messages {
-		if message.Message == nil {
+		if message.Message == nil && message.CallbackQuery == nil {
 			continue
 		}
-		err := authHandler(config, *message.Message)
+		err := authHandler(config, message)
 		if err != nil {
 			log.Warn().
 				Err(err).
@@ -47,18 +47,22 @@ func StartBot(config config.Configuration) {
 			continue
 		}
 		proc := Processor()
+		log.Info().Msg("Получено сообщение")
 		for _, c := range proc {
-			if c.Has(message.Message) {
-				c.Work(botApi, message.Message)
+			if c.Has(message) {
+				c.Work(botApi, message)
 			}
 		}
 
 	}
 }
 
-func authHandler(config config.Configuration, msg tgbotapi.Message) error {
+func authHandler(config config.Configuration, msg tgbotapi.Update) error {
 	for _, user := range config.Project.AllowUser {
-		if user == msg.Chat.ID {
+		if msg.Message != nil && msg.Message.From.ID == user {
+			return nil
+		}
+		if msg.CallbackQuery != nil && user == msg.CallbackQuery.From.ID {
 			return nil
 		}
 	}
@@ -69,6 +73,8 @@ func Processor() []command.CommandInterface {
 	handlers := []command.CommandInterface{}
 	start := command.StartCommand{AllowedKeyboard: []string{"Docker List"}, Command: "/start"}
 	list := command.DockerList{Command: "Docker List"}
-	handlers = append(handlers, start, list)
+	info := command.DockerInfo{Command: "info_"}
+	handler := command.DockerHandler{StartCommand: "start_", StopCommand: "stop_", RestartCommand: "restart_"}
+	handlers = append(handlers, start, list, info, handler)
 	return handlers
 }
